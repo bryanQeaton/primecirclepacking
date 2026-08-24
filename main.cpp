@@ -33,9 +33,9 @@ void computeBoundary() {
 
 
 int main() {
-    double eps=1;
-    double margin=301;
-    int n=40;
+    double eps=.0001;
+    double margin=0.0;
+    int n=25;
     bool stopper=false;
     while (!stopper) {
         margin+=eps;

@@ -1,8 +1,10 @@
 #ifndef PRIMECIRCLEPACKING_PACK_H
 #define PRIMECIRCLEPACKING_PACK_H
+#include <cmath>
+
 #include "circles.h"
 #include "view.h"
-
+constexpr double EPS = 1e-9;
 struct Pack {
     Circle outer{};
     std::vector<Circle> inners{};
@@ -23,13 +25,14 @@ struct Pack {
                 const double dx=intersectors[m].x-intersectors[n].x;
                 const double dy=intersectors[m].y-intersectors[n].y;
                 const double d2=dx*dx+dy*dy;
-                if (d2==0.0){continue;}
+                if (d2<EPS*EPS){continue;}
                 const double d=sqrt(d2);
                 const double r1=intersectors[n].r;
                 const double r2=intersectors[m].r;
-                if (d>r1+r2||d<fabs(r1-r2)){continue;}
+                if (d>r1+r2+EPS||d<std::abs(r1-r2)-EPS){continue;}
                 const double l=(r1*r1-r2*r2+d2)/(2.0*d);
                 const double h2=r1*r1-l*l;
+                if (h2<-EPS){continue;}
                 const double h=sqrt(std::max(0.0,h2));
                 const double px=intersectors[n].x+l*dx/d;
                 const double py=intersectors[n].y+l*dy/d;
