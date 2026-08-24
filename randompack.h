@@ -31,7 +31,7 @@ void randomPack() {
         c3=Circle(dist(gen),dist(gen),7.0);
     }
     std::vector<Circle> circs={outer,c,c1,c2,c3};
-    rasterizeCirclesBMP(circs,"circles.bmp",100);
+    rasterizeCirclesBMP(circs,"circles.bmp",1024,1.0);
 
 }
 

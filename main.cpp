@@ -33,11 +33,27 @@ void computeBoundary() {
 
 
 int main() {
-    int n=7;
-    auto pack=Pack(primes[n-1]+primes[n-2]+1.2075,primes[n-1]);
-    progressivePack(pack,n);
+    double eps=1;
+    double margin=301;
+    int n=40;
+    bool stopper=false;
+    while (!stopper) {
+        margin+=eps;
+        auto pack=Pack(primes[n-1]+primes[n-2]+margin,primes[n-1]);
+        stopper=progressivePack(pack,n);
+        std::cout<<"margin "<<margin<<" total "<<primes[n-1]+primes[n-2]+margin<<"\n";
+    }
 
 
+    // int n=7;
+    // pack=Pack(30.2351,primes[n-1]);
+    // pack.inners.push_back(pack.potentials(13)[0]);
+    // pack.inners.push_back(pack.potentials(11)[4]);
+    // pack.inners.push_back(pack.potentials(7)[0]);
+    // pack.inners.push_back(pack.potentials(5)[1]);
+    // pack.inners.push_back(pack.potentials(3)[0]);
+    // pack.inners.push_back(pack.potentials(2)[1]);
+    // pack.view("hc15.bmp");
 
     //to find upper bound:
     //get n primes

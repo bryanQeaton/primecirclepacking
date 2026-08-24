@@ -1,13 +1,13 @@
 //vibecoded
 #ifndef PRIMECIRCLEPACKING_VIEW_H
 #define PRIMECIRCLEPACKING_VIEW_H
+
 #include <vector>
 #include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <algorithm>
 #include "circles.h"
-
 
 #pragma pack(push, 1)
 struct BMPFileHeader {
@@ -36,19 +36,22 @@ struct BMPInfoHeader {
 void rasterizeCirclesBMP(
     const std::vector<Circle>& circles,
     const char* filename,
-    double pixelsPerUnit = 100.0,
-    double lineWidth = 0.02
+    int resolution,
+    double lineThickness
 ) {
-    if (circles.empty())
+    if (circles.empty() || resolution <= 0)
         return;
 
-    // Center of mass, weighting each circle by its area.
+    // ------------------------------------------------------------
+    // Center the image around the area-weighted center of mass.
+    // ------------------------------------------------------------
+
     double totalMass = 0.0;
     double comX = 0.0;
     double comY = 0.0;
 
     for (const Circle& c : circles) {
-        double mass = c.r * c.r;
+        const double mass = c.r * c.r;
 
         totalMass += mass;
         comX += c.x * mass;
@@ -58,7 +61,10 @@ void rasterizeCirclesBMP(
     comX /= totalMass;
     comY /= totalMass;
 
-    // Find bounds relative to COM.
+    // ------------------------------------------------------------
+    // Find the bounding box relative to the center of mass.
+    // ------------------------------------------------------------
+
     double minX = 0.0;
     double maxX = 0.0;
     double minY = 0.0;
@@ -71,6 +77,10 @@ void rasterizeCirclesBMP(
         maxY = std::max(maxY, c.y + c.r - comY);
     }
 
+    // ------------------------------------------------------------
+    // Make the world bounds square.
+    // ------------------------------------------------------------
+
     const double padding = 1.0;
 
     minX -= padding;
@@ -78,11 +88,30 @@ void rasterizeCirclesBMP(
     minY -= padding;
     maxY += padding;
 
-    const int width =
-        static_cast<int>(std::ceil((maxX - minX) * pixelsPerUnit));
+    const double worldWidth  = maxX - minX;
+    const double worldHeight = maxY - minY;
 
-    const int height =
-        static_cast<int>(std::ceil((maxY - minY) * pixelsPerUnit));
+    const double worldSize =
+        std::max(worldWidth, worldHeight);
+
+    // Center the shorter dimension inside the square.
+    const double centerX = (minX + maxX) * 0.5;
+    const double centerY = (minY + maxY) * 0.5;
+
+    minX = centerX - worldSize * 0.5;
+    maxX = centerX + worldSize * 0.5;
+    minY = centerY - worldSize * 0.5;
+    maxY = centerY + worldSize * 0.5;
+
+    // ------------------------------------------------------------
+    // Pixel scale.
+    // ------------------------------------------------------------
+
+    const double pixelsPerUnit =
+        static_cast<double>(resolution) / worldSize;
+
+    const int width = resolution;
+    const int height = resolution;
 
     const int rowStride = (width * 3 + 3) & ~3;
 
@@ -92,8 +121,11 @@ void rasterizeCirclesBMP(
         255
     );
 
-    // Half the border thickness.
-    const double halfWidth = lineWidth * 0.5;
+    const double halfWidth = lineThickness * 0.5;
+
+    // ------------------------------------------------------------
+    // Rasterize circle circumferences.
+    // ------------------------------------------------------------
 
     for (const Circle& c : circles) {
         const double cx = c.x - comX;
@@ -102,14 +134,20 @@ void rasterizeCirclesBMP(
         const int x0 = std::max(
             0,
             static_cast<int>(
-                std::floor((cx - c.r - halfWidth - minX) * pixelsPerUnit)
+                std::floor(
+                    (cx - c.r - halfWidth - minX) *
+                    pixelsPerUnit
+                )
             )
         );
 
         const int x1 = std::min(
             width - 1,
             static_cast<int>(
-                std::ceil((cx + c.r + halfWidth - minX) * pixelsPerUnit)
+                std::ceil(
+                    (cx + c.r + halfWidth - minX) *
+                    pixelsPerUnit
+                )
             )
         );
 
@@ -117,7 +155,8 @@ void rasterizeCirclesBMP(
             0,
             static_cast<int>(
                 std::floor(
-                    (maxY - (cy + c.r + halfWidth)) * pixelsPerUnit
+                    (maxY - (cy + c.r + halfWidth)) *
+                    pixelsPerUnit
                 )
             )
         );
@@ -126,7 +165,8 @@ void rasterizeCirclesBMP(
             height - 1,
             static_cast<int>(
                 std::ceil(
-                    (maxY - (cy - c.r - halfWidth)) * pixelsPerUnit
+                    (maxY - (cy - c.r - halfWidth)) *
+                    pixelsPerUnit
                 )
             )
         );
@@ -145,20 +185,23 @@ void rasterizeCirclesBMP(
                 const double distance =
                     std::sqrt(dx * dx + dy * dy);
 
-                // Only draw the circumference.
                 if (std::abs(distance - c.r) <= halfWidth) {
                     const size_t index =
                         static_cast<size_t>(py) * rowStride +
                         static_cast<size_t>(px) * 3;
 
-                    // Black border, white interior.
-                    pixels[index + 0] = 0; // B
-                    pixels[index + 1] = 0; // G
-                    pixels[index + 2] = 0; // R
+                    // BMP stores pixels as BGR.
+                    pixels[index + 0] = 0;
+                    pixels[index + 1] = 0;
+                    pixels[index + 2] = 0;
                 }
             }
         }
     }
+
+    // ------------------------------------------------------------
+    // Write BMP.
+    // ------------------------------------------------------------
 
     BMPFileHeader fileHeader;
     BMPInfoHeader infoHeader;
@@ -193,4 +236,5 @@ void rasterizeCirclesBMP(
         static_cast<std::streamsize>(pixels.size())
     );
 }
-#endif //PRIMECIRCLEPACKING_VIEW_H
+
+#endif // PRIMECIRCLEPACKING_VIEW_H

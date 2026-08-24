@@ -3,15 +3,21 @@
 #include "pack.h"
 
 
-constexpr double primes[15] = {
-    2.0, 3.0, 5.0, 7.0, 11.0,
-    13.0, 17.0, 19.0, 23.0, 29.0,
-    31.0, 37.0, 41.0, 43.0, 47.0
+constexpr double primes[100] = {
+    2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
+31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
+73, 79, 83, 89, 97, 101, 103, 107, 109, 113,
+127, 131, 137, 139, 149, 151, 157, 163, 167, 173,
+179, 181, 191, 193, 197, 199, 211, 223, 227, 229,
+233, 239, 241, 251, 257, 263, 269, 271, 277, 281,
+283, 293, 307, 311, 313, 317, 331, 337, 347, 349,
+353, 359, 367, 373, 379, 383, 389, 397, 401, 409,
+419, 421, 431, 433, 439, 443, 449, 457, 461, 463,
+467, 479, 487, 491, 499, 503, 509, 521, 523, 541
 };
 
 inline bool progressivePack(Pack pack,const int n) {
-    if (n<2) {
-        std::cout<<"eureka!";
+    if (n<=1) {
         for (auto &n:pack.inners) {
             std::cout<<n.x<<" "<<n.y<<" "<<n.r<<"\n";
         }
@@ -28,9 +34,9 @@ inline bool progressivePack(Pack pack,const int n) {
             }
         }
         if (!intersecting) {
-            std::cout<<"test";
             pack.inners.push_back(c);
             auto res=progressivePack(pack,n-1);
+            pack.inners.pop_back();
             if (res){return true;}
         }
     }

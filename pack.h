@@ -45,14 +45,15 @@ struct Pack {
 
             }
         }
-
+        std::ranges::sort(pots);
+        pots.erase(std::ranges::unique(pots).begin(), pots.end());
         return pots;
     }
 
     void view(const std::string& filename) const {
         auto vec=inners;
         vec.push_back(outer);
-        rasterizeCirclesBMP(vec,filename.c_str(),100);
+        rasterizeCirclesBMP(vec,filename.c_str(),1024,.8);
 
     }
 };
